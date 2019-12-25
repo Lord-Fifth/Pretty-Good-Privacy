@@ -1,11 +1,19 @@
 # Pretty-Good-Privacy
 
+This guide shall introduce you to two core concepts
+
+* **PGP** : Basic Guide can be found in this [Tutorial by The Privacy Guide](https://theprivacyguide.org/tutorials/pgp.html)
+* **Web of Trust** : Core Concepts is explained in this [Tutorial by Linux.com](https://www.linux.com/tutorials/pgp-web-trust-core-concepts-behind-trusted-communication/) 
+----
+
 ## Gnu PG Cheat Sheet
+Cheat sheet to get started with PGP using GnuPG on GNU/Linux Machines.
 
 ### Install Gnu PG tool
 
 ```
 sudo apt-get install gnupg
+gpg --version
 
 ```
 
@@ -22,50 +30,57 @@ gpg --fingerprint <your_email>
 
 ```
 
-### File Sharing using MD5
+**Last 8 Digits of fingerprint (without space) forms the  key_id**
+
+### File Integrity Check using MD5 Checksum
 
 ```
 touch file.txt
-nano file.txt
-md5sum file.txt > checksum.md5
-md5sum -c checksum.md5
+nano file.txt //Edit file
+md5sum file.txt > checksum.md5 //Generate Checksum and export it to a file named checksum.md5
+md5sum -c checksum.md5 //Check the integrity of file associated with generated checksum 
  
 ```
 
-### GPG Way to create user association
+### File Integrity check with User Association using GPG
 
 ```
-gpg --detach-sign test.txt
-gpg --verify test.txt.sig
+gpg --detach-sign test.txt //This will generate a file test.txt.sig
+gpg --verify test.txt.sig  //Check the integrity, origin and authenticity of the file
 
 ```
 
 
 ## Encrypting files
 
-### Find Keys
+### Upload Key to key server
 
 ```
-gpg --keyserver pool.sks-keyservers.net --send-keys <email_id>
+gpg --keyserver pool.sks-keyservers.net --send-keys <your_key_id> 
 
-gpg --keyserver pool.sks-keyservers.net --search-keys <email_add>
+```
+**If the keyserver fails, try another which is a part of the [key server pool](https://sks-keyservers.net/status/)**
+
+### Find and Import  Recipients Public Key
+
+```
+gpg --keyserver pool.sks-keyservers.net --search-keys <recipent_email_add>
 
 ```
 
-### Encrypt
+### Encrypt a file using public key of recipient
 
 ```
 gpg --encrypt --sign --armor -r <recipient_email> name_of_file
 
 ```
 
-### Decrypt
+### Decrypt a file using private key
 
 ```
-gpg file_name.asc
+gpg file_name.asc //To be done at the recipients machine
 
 ```
-
 
 ### Exporting Private Key
 
@@ -74,61 +89,81 @@ gpg --armor --export-secret-keys <your_email> > <filename.asc>
 
 ```
 
-## Sign Keys
+----
+
+## Web of Trust
+
+### Sign Key
 
 ```
 gpg --edit-key <key_id>
 
- >sign
- >trust
+ >sign  
+ >trust  
  >save
 
 ```
 
-
-### Send Signed Keys
+### Exported the Signed Key in Encrypted format 
 
 ```
 gpg -a --export <key_id> | gpg -se -r <key_id> > <key_id>.asc.pgp
 
 ```
 
-Now Send the pgp file via email/thumbdrive
+**Now Send the signed key file to its user via email/thumbdrive**
 
-### What the other user should do
+
+### On the receiver end
 
 ```
 gpg --decrypt <key_id>.asc.pgp
 gpg --import <key_id>.asc
-gpg --keyserver pool.sks-keyservers.net --send-keys <email_id>  
+gpg --keyserver pool.sks-keyservers.net --send-keys <key_id>  
 
 ```
 
-### Worst_Case
+----
+
+## Other quick commands
+
+### Revoke keys
 
 ```
-gpg --keyserver pool.sks-keyservers.net --send-keys <email_id_or_key_id>
+gpg --import <revocation_cert.asc>
+gpg --keyserver pool.sks-keyserver.net --send-keys <key_id>
 
 ```
+### Refresh Keys 
 
-### Refresh Keys
-
-```
+``` 
 gpg --keyserver pool.sks-keyservers.net --refresh-keys
 
-```
+``` 
+
+**Do this once in a while to ensure that key has not been revoked by the user**
 
 ### List Signatures
 
-```
-gpg --list-sigs <key_id>
+``` 
+gpg --list-sigs <key_id> 
 
-```
+``` 
 
 ### Shred Files
 
 ```
-shred -n 200 -z -u  <file.name>
+shred -n 200 -z -u  <file.name> // Always shread than rm for private files
+
+```
+**Take care in storing your keys safe**
+
+In the event of a private key/key ring export to another memory media, shred the key files after the work is done 
+
+### Exporting Private Key
+
+```
+gpg --armor --export-secret-keys <your_email> > <filename.asc> //Export Secret key to a file with .asc (ASCII) extension 
 
 ```
 
@@ -136,6 +171,6 @@ shred -n 200 -z -u  <file.name>
 
 ```
 gpg --delete-keys <key-id>
-gpg --delete-secret-key <key-id>
+gpg --delete-secret-key <key-id>  //delete Private Keys
 
 ```
